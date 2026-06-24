@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, User, Briefcase, ExternalLink, Github, Sparkles } from 'lucide-react';
+import { X, Calendar, User, Building, ChevronLeft, ChevronRight, ExternalLink, Globe, Award, Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
 import { Project } from '../types';
 
 interface ProjectModalProps {
@@ -9,184 +9,232 @@ interface ProjectModalProps {
 }
 
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
-  // Prevent scrolling behind open modal
+  if (!project) return null;
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Otomatis geser gambar setiap 4 detik
   useEffect(() => {
-    if (project) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [project]);
+    if (!project.images || project.images.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % project.images.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [project.images, project.id]);
+
+  // Reset slide index ke 0 saat ganti modal project lain
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [project.id]);
+
+  const handlePrevSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev === 0 ? project.images.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev + 1) % project.images.length);
+  };
 
   return (
     <AnimatePresence>
-      {project && (
-        <div id="project-modal-portal" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop Shadow Overlay */}
-          <motion.div
-            id="modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-pink-900/10 backdrop-blur-md"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 30 }}
+          transition={{ type: 'spring', duration: 0.6 }}
+          className="relative w-full max-w-4xl bg-white/95 backdrop-blur-xl border border-pink-200/50 rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(255,182,193,0.35)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Tombol Close */}
+          <button 
             onClick={onClose}
-            className="absolute inset-0 bg-pink-950/20 backdrop-blur-md"
-          />
-
-          {/* Modal Container */}
-          <motion.div
-            id="modal-content-card"
-            initial={{ scale: 0.9, y: 30, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.9, y: 30, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 z-10 text-pink-950 border border-white/60 shadow-2xl"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 245, 247, 0.9) 100%)',
-              boxShadow: '0 24px 64px -12px rgba(220, 140, 160, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6)',
-            }}
+            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 border border-pink-200/40 text-pink-900/60 hover:text-pink-900 shadow-xs cursor-pointer transition-colors"
           >
-            {/* Scalloped Lace Inner Trim */}
-            <div
-              className="absolute inset-1 border border-dashed border-pink-300/40 rounded-2xl pointer-events-none"
-              style={{ margin: '6px' }}
-            />
+            <X className="w-5 h-5" />
+          </button>
 
-            {/* Close button with Glossy Pearl Style */}
-            <motion.button
-              id="close-modal-btn"
-              onClick={onClose}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center border border-pink-200 shadow-md cursor-pointer bg-white"
-              style={{
-                background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #fff0f2 35%, #ffd1dc 100%)',
-              }}
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <X className="w-4 h-4 text-pink-800" />
-            </motion.button>
+          {/* BAGIAN SLIDER GAMBAR */}
+          <div className="relative w-full h-[240px] md:h-[380px] bg-pink-50/30 overflow-hidden group">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentSlide}
+                src={project.images[currentSlide]}
+                alt={`${project.title} slide ${currentSlide + 1}`}
+                initial={{ opacity: 0, scale: 1.03 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.5 }}
+                className="w-full h-full object-cover select-none"
+              />
+            </AnimatePresence>
 
-            {/* Content Body */}
-            <div id="modal-body-container" className="mt-2 space-y-6">
-              {/* Category & Date Header */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="font-mono text-[10px] tracking-wider uppercase bg-pink-100 text-pink-700 px-3 py-1 rounded-full border border-pink-200/50 font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 animate-spin" />
-                  {project.category}
-                </span>
-                <span className="font-mono text-[10px] text-pink-500 flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full border border-pink-100">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {project.date}
-                </span>
-              </div>
+            {project.images.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevSlide}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 border border-pink-100 text-pink-800 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md hover:bg-white cursor-pointer"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNextSlide}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 border border-pink-100 text-pink-800 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md hover:bg-white cursor-pointer"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
 
-              {/* Title & Subtitle */}
+                {/* Pearl Dots Indicator */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+                  {project.images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        currentSlide === idx ? 'w-5 bg-pink-500' : 'w-2 bg-white/70 border border-pink-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* DETAIL KONTEN */}
+          <div className="p-6 md:p-8 max-h-[50vh] overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* STUDI KASUS NARATIF */}
+            <div className="md:col-span-2 space-y-5 pr-0 md:pr-2">
               <div>
-                <h3 id="modal-project-title" className="font-serif text-3xl md:text-4xl font-bold tracking-tight text-pink-950">
+                <span className="font-mono text-[10px] text-pink-500 tracking-wider uppercase font-bold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 animate-pulse" /> {project.category}
+                </span>
+                <h3 className="font-serif text-xl md:text-2xl font-extrabold text-pink-950 mt-1">
                   {project.title}
                 </h3>
-                <p id="modal-project-subtitle" className="font-serif italic text-base md:text-lg text-pink-700/80 mt-1">
-                  {project.subtitle}
-                </p>
+                <p className="font-mono text-[11px] text-pink-800/60 italic mt-0.5">{project.subtitle}</p>
               </div>
 
-              {/* Image Container with Lace Trim Frame */}
-              <div id="modal-image-frame" className="relative group overflow-hidden rounded-2xl border border-pink-100 shadow-inner">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-56 md:h-72 object-cover object-center transition-all duration-700 hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
-                {/* Overlay ribbon vignette */}
-                <div className="absolute inset-0 bg-gradient-to-t from-pink-950/20 to-transparent pointer-events-none" />
-              </div>
-
-              {/* Role & Client Meta Grid */}
-              <div id="modal-meta-grid" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-pink-100/30 border border-pink-200/20 backdrop-blur-sm">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="w-4 h-4 text-pink-500 shrink-0" />
-                  <span className="text-pink-900/70 font-mono text-xs">Role:</span>
-                  <strong className="text-pink-950 font-medium">{project.role}</strong>
-                </div>
-                {project.client && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Briefcase className="w-4 h-4 text-pink-500 shrink-0" />
-                    <span className="text-pink-900/70 font-mono text-xs">Client:</span>
-                    <strong className="text-pink-950 font-medium">{project.client}</strong>
-                  </div>
-                )}
-              </div>
-
-              {/* Long Description Text */}
-              <div id="modal-description-section" className="space-y-3">
-                <h4 className="font-serif text-lg font-bold text-pink-950 border-b border-pink-100 pb-1.5 flex items-center gap-2">
-                  <span>Project Story & Outcomes</span>
+              {/* Babak 1 */}
+              <div className="bg-rose-50/40 p-4 rounded-xl border border-rose-100/60">
+                <h4 className="font-serif text-xs md:text-sm font-bold text-rose-950 flex items-center gap-1.5 mb-1">
+                  <AlertCircle className="w-4 h-4 text-rose-500" />
+                  Tantangan Utama (The Challenge)
                 </h4>
-                <p className="text-pink-900/80 font-sans text-sm leading-relaxed whitespace-pre-line">
-                  {project.longDescription}
+                <p className="font-sans text-xs md:text-sm text-pink-950/80 leading-relaxed">
+                  {project.challenge}
                 </p>
               </div>
 
-              {/* Tags Cloud */}
-              <div id="modal-tags-section" className="space-y-2">
-                <span className="font-serif text-xs italic text-pink-600">Technologies & Methodologies:</span>
-                <div className="flex flex-wrap gap-1.5">
+              {/* Babak 2 */}
+              <div className="bg-pink-50/30 p-4 rounded-xl border border-pink-100/60">
+                <h4 className="font-serif text-xs md:text-sm font-bold text-pink-950 flex items-center gap-1.5 mb-1">
+                  <Sparkles className="w-4 h-4 text-pink-500" />
+                  Solusi Kreatif & Teknis (The Solution)
+                </h4>
+                <p className="font-sans text-xs md:text-sm text-pink-950/80 leading-relaxed">
+                  {project.solution}
+                </p>
+              </div>
+
+              {/* Babak 3 */}
+              <div className="bg-emerald-50/30 p-4 rounded-xl border border-emerald-100/50">
+                <h4 className="font-serif text-xs md:text-sm font-bold text-emerald-950 flex items-center gap-1.5 mb-1">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  Dampak & Hasil Akhir (The Impact)
+                </h4>
+                <p className="font-sans text-xs md:text-sm text-pink-950/80 leading-relaxed">
+                  {project.impact}
+                </p>
+              </div>
+            </div>
+
+            {/* SIDEBAR METADATA & BUTTON LINK */}
+            <div className="space-y-4 bg-pink-50/10 p-4 rounded-2xl border border-pink-100/40 h-fit">
+              <h4 className="font-serif text-[11px] font-bold text-pink-950 uppercase tracking-widest border-b border-pink-200/30 pb-2">
+                Project Information
+              </h4>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex items-start gap-2 text-pink-950/80">
+                  <Award className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[9px] text-pink-800/50 uppercase font-mono">My Role</p>
+                    <p className="font-semibold text-pink-900">{project.role}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-pink-950/80">
+                  <Calendar className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[9px] text-pink-800/50 uppercase font-mono">Timeline</p>
+                    <p className="font-semibold text-pink-900">{project.date}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-pink-950/80">
+                  <Building className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[9px] text-pink-800/50 uppercase font-mono">Institution</p>
+                    <p className="font-semibold text-pink-900">{project.client}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-pink-200/30">
+                <p className="text-[9px] text-pink-800/50 uppercase font-mono mb-1.5">Tools & Skills</p>
+                <div className="flex flex-wrap gap-1">
                   {project.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="font-mono text-[10px] text-pink-900/80 bg-white border border-pink-200/30 rounded-lg px-2.5 py-1 shadow-sm"
+                    <span 
+                      key={tag} 
+                      className="font-mono text-[9px] font-semibold text-pink-800 bg-white border border-pink-100 px-1.5 py-0.5 rounded-md shadow-2xs"
                     >
-                      #{tag}
+                      {tag}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* Actions Footer */}
-              <div id="modal-actions-footer" className="flex flex-wrap items-center gap-4 pt-4 border-t border-pink-100">
-                {project.link && (
-                  <motion.a
-                    id="modal-btn-demo"
-                    href={project.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-pink-400 to-pink-300 text-white shadow-md border border-pink-300/40 cursor-pointer"
-                    whileHover={{ scale: 1.04, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    <span>Launch Demo</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </motion.a>
-                )}
-                {project.github && (
-                  <motion.a
-                    id="modal-btn-github"
-                    href={project.github}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase bg-stone-900 text-stone-100 shadow-md border border-stone-800 cursor-pointer"
-                    whileHover={{ scale: 1.04, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    <Github className="w-3.5 h-3.5" />
-                    <span>View Repository</span>
-                  </motion.a>
-                )}
-                <button
-                  id="modal-btn-close-bottom"
-                  onClick={onClose}
-                  className="font-mono text-[10px] uppercase font-bold text-pink-500 hover:text-pink-700 transition-colors cursor-pointer ml-auto"
-                >
-                  Close Window
-                </button>
-              </div>
+              {/* ACTION BUTTONS (Mutiara CTA) */}
+              {project.links && (
+                <div className="pt-2 border-t border-pink-200/30 flex flex-col gap-1.5">
+                  {project.links.figma && (
+                    <a
+                      href={project.links.figma}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full flex items-center justify-center gap-1 text-center text-xs font-semibold py-1.5 rounded-xl border border-pink-200 text-pink-900 bg-white hover:-translate-y-0.5 transition-transform cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-pink-500" />
+                      Open Figma Prototype
+                    </a>
+                  )}
+                  {project.links.live && (
+                    <a
+                      href={project.links.live}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full flex items-center justify-center gap-1 text-center text-xs font-semibold py-1.5 rounded-xl text-white hover:-translate-y-0.5 transition-transform cursor-pointer shadow-sm"
+                      style={{ background: 'linear-gradient(135deg, #ff8da1 0%, #f48fb1 100%)' }}
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      View Live Project
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
-          </motion.div>
-        </div>
-      )}
+
+          </div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 };

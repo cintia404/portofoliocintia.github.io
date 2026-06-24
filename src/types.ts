@@ -1,27 +1,22 @@
-export type ProjectCategory = 'All' | 'IT & Tech' | 'Public Speaking' | 'Creative';
+export type AestheticTheme = 'coquette' | 'premium';
 
 export interface Project {
   id: string;
   title: string;
-  category: ProjectCategory;
+  category: string;
   subtitle: string;
   description: string;
-  longDescription: string;
-  image: string;
+  challenge: string; // Babak 1: Tantangan
+  solution: string;  // Babak 2: Solusi
+  impact: string;    // Babak 3: Dampak
+  images: string[];  // Menampung banyak gambar untuk slider
   tags: string[];
   role: string;
   date: string;
-  client?: string;
-  link?: string;
-  github?: string;
+  client: string;
+  links?: {          // Tautan interaktif tombol aksi
+    live?: string;
+    figma?: string;
+    github?: string;
+  };
 }
-
-export interface MusicTrack {
-  id: string;
-  title: string;
-  artist: string;
-  url: string;
-  duration: string;
-}
-
-export type AestheticTheme = 'coquette' | 'premium';
