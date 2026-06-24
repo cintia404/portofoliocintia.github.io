@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Play, Pause, SkipForward, Volume2, VolumeX, Music, Heart, Sparkles } from 'lucide-react';
 import { musicTracksList } from '../data';
 
@@ -11,24 +11,19 @@ export const MusicPlayer: React.FC = () => {
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [liked, setLiked] = useState(false);
-
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const track = musicTracksList[currentTrackIndex];
 
-  // Initialize Audio
   useEffect(() => {
     audioRef.current = new Audio(track.url);
     audioRef.current.volume = isMuted ? 0 : volume;
 
-    // Listeners
     const onTimeUpdate = () => {
       if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
     };
-
     const onLoadedMetadata = () => {
       if (audioRef.current) setDuration(audioRef.current.duration);
     };
-
     const onEnded = () => {
       handleNextTrack();
     };
@@ -37,7 +32,6 @@ export const MusicPlayer: React.FC = () => {
     audioRef.current.addEventListener('loadedmetadata', onLoadedMetadata);
     audioRef.current.addEventListener('ended', onEnded);
 
-    // If it was already playing before track change, resume playing
     if (isPlaying) {
       audioRef.current.play().catch(() => setIsPlaying(false));
     }
@@ -52,10 +46,8 @@ export const MusicPlayer: React.FC = () => {
     };
   }, [currentTrackIndex]);
 
-  // Handle Play / Pause
   const togglePlay = () => {
     if (!audioRef.current) return;
-
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -63,20 +55,17 @@ export const MusicPlayer: React.FC = () => {
       audioRef.current.play()
         .then(() => setIsPlaying(true))
         .catch((err) => {
-          console.warn("Audio playback blocked by browser autocomplete permissions.", err);
-          // Set to playing state anyway to let user click again or indicate intent
+          console.warn("Audio playback blocked", err);
           setIsPlaying(true);
         });
     }
   };
 
-  // Handle Next Track
   const handleNextTrack = () => {
     setCurrentTrackIndex((prev) => (prev + 1) % musicTracksList.length);
     setCurrentTime(0);
   };
 
-  // Handle Seek Slider
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     if (audioRef.current) {
@@ -85,7 +74,6 @@ export const MusicPlayer: React.FC = () => {
     }
   };
 
-  // Handle Volume Change
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
@@ -96,7 +84,6 @@ export const MusicPlayer: React.FC = () => {
     }
   };
 
-  // Handle Mute
   const toggleMute = () => {
     const nextMute = !isMuted;
     setIsMuted(nextMute);
@@ -106,7 +93,6 @@ export const MusicPlayer: React.FC = () => {
     }
   };
 
-  // Format Time representation
   const formatTime = (timeSecs: number) => {
     if (isNaN(timeSecs)) return '0:00';
     const mins = Math.floor(timeSecs / 60);
@@ -120,7 +106,10 @@ export const MusicPlayer: React.FC = () => {
       initial={{ opacity: 0, x: -30 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 1 }}
-      className="fixed bottom-4 right-4 z-40 max-w-sm hidden lg:block rounded-2xl p-4 overflow-hidden border border-white/60 shadow-lg"
+      drag
+      dragMomentum={false}
+      dragConstraints={{ left: -1000, right: 20, top: -600, bottom: 20 }}
+      className="fixed bottom-4 right-4 z-40 max-w-sm hidden lg:block rounded-2xl p-4 overflow-hidden border border-white/60 shadow-lg cursor-grab active:cursor-grabbing"
       style={{
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 240, 243, 0.4) 100%)',
         backdropFilter: 'blur(20px)',
@@ -129,7 +118,6 @@ export const MusicPlayer: React.FC = () => {
       }}
     >
       <div className="flex items-center gap-4">
-        {/* Spinning Pearl Vinyl Disc Layout */}
         <div className="relative">
           <motion.div
             id="spinning-music-vinyl"
@@ -147,11 +135,8 @@ export const MusicPlayer: React.FC = () => {
               repeatType: 'loop',
             }}
           >
-            {/* Spinning Groove Lines */}
             <div className="absolute inset-2 border border-pink-900/10 rounded-full" />
             <div className="absolute inset-4 border border-pink-900/20 rounded-full" />
-
-            {/* Center Pearl Button */}
             <div
               className="w-4 h-4 rounded-full border border-pink-200"
               style={{
@@ -159,8 +144,6 @@ export const MusicPlayer: React.FC = () => {
               }}
             />
           </motion.div>
-
-          {/* Tiny blinking note */}
           {isPlaying && (
             <motion.div
               className="absolute -top-1 -right-1 text-pink-500 pointer-events-none"
@@ -171,8 +154,6 @@ export const MusicPlayer: React.FC = () => {
             </motion.div>
           )}
         </div>
-
-        {/* Track Metadata Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <span className="font-mono text-[9px] uppercase tracking-widest text-pink-500 font-bold flex items-center gap-1">
@@ -187,7 +168,6 @@ export const MusicPlayer: React.FC = () => {
               <Heart className={`w-4 h-4 ${liked ? 'fill-pink-400 text-pink-500' : ''}`} />
             </button>
           </div>
-
           <h4 className="font-serif text-sm font-bold text-pink-950 truncate mt-0.5">
             {track.title}
           </h4>
@@ -196,14 +176,11 @@ export const MusicPlayer: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Progress timeline slider with pearl track */}
       <div className="mt-3.5 space-y-1">
         <div className="flex items-center justify-between text-[9px] font-mono text-pink-800/50">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration || 180)}</span>
         </div>
-
         <input
           type="range"
           min="0"
@@ -217,11 +194,8 @@ export const MusicPlayer: React.FC = () => {
           aria-label="Track Progress Seek"
         />
       </div>
-
-      {/* Control Buttons row */}
       <div className="flex items-center justify-between mt-3 pt-2 border-t border-pink-200/20">
         <div className="flex items-center gap-1.5">
-          {/* Mute button */}
           <button
             id="music-mute-btn"
             onClick={toggleMute}
@@ -230,7 +204,6 @@ export const MusicPlayer: React.FC = () => {
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
-          
           <input
             type="range"
             min="0"
@@ -242,8 +215,6 @@ export const MusicPlayer: React.FC = () => {
             aria-label="Volume Slider"
           />
         </div>
-
-        {/* Media Trigger Circle Center buttons */}
         <div className="flex items-center gap-3">
           <motion.button
             id="music-play-pause-btn"
@@ -258,7 +229,6 @@ export const MusicPlayer: React.FC = () => {
           >
             {isPlaying ? <Pause className="w-3.5 h-3.5 fill-white" /> : <Play className="w-3.5 h-3.5 fill-white ml-0.5" />}
           </motion.button>
-
           <button
             id="music-skip-next-btn"
             onClick={handleNextTrack}
