@@ -26,7 +26,7 @@ jobs:
       - name: Set up Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24  # <-- Sudah kita perbarui ke versi 24 agar sesuai dengan standar terbaru GitHub
           cache: 'npm'
 
       - name: Install Project Dependencies
